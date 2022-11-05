@@ -1,5 +1,4 @@
 
-
 This is based on XTronical's I2S Audio Library that uses the ESP32.
 You can find the Library from his website: https://www.xtronical.com/i2sprerelease/
 You should also check his YouTube channel for other great projects: https://www.youtube.com/channel/UCOjddcYTYcZBGhpBALhX4Kg
@@ -17,7 +16,7 @@ My 1st goal, is to add the SD Card option to this library so that I can play lar
 
 -----------------------------------------
 
-Progress:
+<b>Progress:</b>
 
 Added ability to read WAV file header from SD card.
 Now it is able to construct an XT_Wav_Class object using the filename as argument. e.g: XT_Wav_Class MySound("/sample.wav");
