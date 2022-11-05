@@ -17,7 +17,7 @@
 
 XT_I2S_Class I2SAudio(I2S_LRC, I2S_BCLK, I2S_DOUT, I2S_NUM_0);
 
-XT_Wav_Class MySound(WavData16BitStereo);
+XT_Wav_Class MySound("/sample.wav");
 
 //------------------------------------------------------------------------------------------------------------------------
 
@@ -29,9 +29,29 @@ float floatMap(float x, float in_min, float in_max, float out_min, float out_max
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
+void SDCardInit()
+{
+  pinMode(SD_CS, OUTPUT);
+  digitalWrite(SD_CS, HIGH); // SD card chips select, must use GPIO 5 (ESP32 SS)
+  if (!SD.begin(SD_CS))
+  {
+    Serial.println("Error talking to SD card!");
+    while (true)
+      ; // end program
+  }
+}
+
+void LoadFiles()
+{
+  MySound.LoadWavFile();
+}
+
 void setup()
 {
   Serial.begin(9600); // Used for info/debug
+  
+  SDCardInit();
+  LoadFiles();  // Load all wave files
 
   MySound.RepeatForever = true;
   MySound.Volume = 100;
