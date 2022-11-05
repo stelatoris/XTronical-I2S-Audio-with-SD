@@ -3,6 +3,7 @@
 This is based on XTronical's I2S Audio Library that uses the ESP32.
 You can find the Library from his website: https://www.xtronical.com/i2sprerelease/
 You should also check his YouTube channel for other great projects: https://www.youtube.com/channel/UCOjddcYTYcZBGhpBALhX4Kg
+---------------------------------------------
 
 <b>Goal:</b>
 My intention for this mirror is to hopefully have others use it as well and build on it.
