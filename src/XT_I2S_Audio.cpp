@@ -11,6 +11,8 @@
 #include <cstring>
 #include <hardwareSerial.h>
 
+#define M_PI 3.14159265358979323846  
+
 WavHeader_Struct WavHeader;						// Used as a place to store the header data from the wav data
 XT_Instrument_Class DEFAULT_INSTRUMENT; 		// Used if calling routine does not state an instrument for a note.
 
@@ -398,19 +400,194 @@ void XT_TriangleWave_Class::Init(int8_t Note)
 // Convert 4 byte little-endian to a long.
 #define longword(bfr, ofs) (bfr[ofs+3] << 24 | bfr[ofs+2] << 16 |bfr[ofs+1] << 8 |bfr[ofs+0])
 
-XT_Wav_Class::XT_Wav_Class(const unsigned char *WavData)
-{	
-    // create a new wav class object
-	memcpy(&WavHeader,WavData,44);                     // Copy the header part of the wav data into our structure
-	SampleRate=WavHeader.SampleRate;
-	BytesPerSample=(WavHeader.BitsPerSample/8)*WavHeader.NumChannels;
-	DataSize=WavHeader.DataSize;
-    IncreaseBy=float(SampleRate)/SAMPLES_PER_SEC;
-    PlayingTime = (1000 * DataSize) / (uint32_t)(SampleRate);
-    Data=WavData+44;
-    Speed=1.0;
-	Volume=100;
+// XT_Wav_Class::XT_Wav_Class(const unsigned char *WavData)
+// {	
+//     // create a new wav class object
+// 	memcpy(&WavHeader,WavData,44);                     // Copy the header part of the wav data into our structure
+// 	SampleRate=WavHeader.SampleRate;
+// 	BytesPerSample=(WavHeader.BitsPerSample/8)*WavHeader.NumChannels;
+// 	DataSize=WavHeader.DataSize;
+//     IncreaseBy=float(SampleRate)/SAMPLES_PER_SEC;
+//     PlayingTime = (1000 * DataSize) / (uint32_t)(SampleRate);
+//     Data=WavData+44;
+//     Speed=1.0;
+// 	Volume=100;
+// }
+
+XT_Wav_Class::XT_Wav_Class(const String &name) // Load data from file on SD Card
+	: FileName{name}
+{
+	SamplesBufferIsEmpty = true;
+	// create a new wav class object
+
+	// 	unsigned char c;
+	// size_t numRead = file.read(&c, sizeof(c));
+	// if (numRead != sizeof(c)) {
+	//   // error, like end of file
+	//   return;
+	// }
+	// // process c
 }
+
+//****** LATEST ADDITIONS **************************************************
+
+
+bool XT_Wav_Class::ValidWavData(WavHeader_Struct *Wav)
+{
+
+	if (memcmp(Wav->RIFFSectionID, "RIFF", 4) != 0)
+	{
+		Serial.print("Invalid data - Not RIFF format");
+		return false;
+	}
+	if (memcmp(Wav->RiffFormat, "WAVE", 4) != 0)
+	{
+		Serial.print("Invalid data - Not Wave file");
+		return false;
+	}
+	if (memcmp(Wav->FormatSectionID, "fmt", 3) != 0)
+	{
+		Serial.print("Invalid data - No format section found");
+		return false;
+	}
+	if (memcmp(Wav->DataSectionID, "data", 4) != 0)
+	{
+		Serial.print("Invalid data - data section not found");
+		return false;
+	}
+	if (Wav->FormatID != 1)
+	{
+		Serial.print("Invalid data - format Id must be 1");
+		return false;
+	}
+	if (Wav->FormatSize != 16)
+	{
+		Serial.print("Invalid data - format section size must be 16.");
+		return false;
+	}
+	if ((Wav->NumChannels != 1) & (Wav->NumChannels != 2))
+	{
+		Serial.print("Invalid data - only mono or stereo permitted.");
+		return false;
+	}
+	if (Wav->SampleRate > 48000)
+	{
+		Serial.print("Invalid data - Sample rate cannot be greater than 48000");
+		return false;
+	}
+	if ((Wav->BitsPerSample != 8) & (Wav->BitsPerSample != 16))
+	{
+		Serial.print("Invalid data - Only 8 or 16 bits per sample permitted.");
+		return false;
+	}
+	return true;
+}
+
+void XT_Wav_Class::PrintData(const char *Data, uint8_t NumBytes)
+{
+	for (uint8_t i = 0; i < NumBytes; i++)
+		Serial.print(Data[i]);
+	Serial.println();
+}
+
+void XT_Wav_Class::DumpWAVHeader(WavHeader_Struct *Wav)
+{
+	if (memcmp(Wav->RIFFSectionID, "RIFF", 4) != 0)
+	{
+		Serial.print("Not a RIFF format file - ");
+		PrintData(Wav->RIFFSectionID, 4);
+		return;
+	}
+	if (memcmp(Wav->RiffFormat, "WAVE", 4) != 0)
+	{
+		Serial.print("Not a WAVE file - ");
+		PrintData(Wav->RiffFormat, 4);
+		return;
+	}
+	if (memcmp(Wav->FormatSectionID, "fmt", 3) != 0)
+	{
+		Serial.print("fmt ID not present - ");
+		PrintData(Wav->FormatSectionID, 3);
+		return;
+	}
+	if (memcmp(Wav->DataSectionID, "data", 4) != 0)
+	{
+		Serial.print("data ID not present - ");
+		PrintData(Wav->DataSectionID, 4);
+		return;
+	}
+	// All looks good, dump the data
+	Serial.println();
+	Serial.print("Total size :");
+	Serial.println(Wav->Size);
+	Serial.print("Format section size :");
+	Serial.println(Wav->FormatSize);
+	Serial.print("Wave format :");
+	Serial.println(Wav->FormatID);
+	Serial.print("Channels :");
+	Serial.println(Wav->NumChannels);
+	Serial.print("Sample Rate :");
+	Serial.println(Wav->SampleRate);
+	Serial.print("Byte Rate :");
+	Serial.println(Wav->ByteRate);
+	Serial.print("Block Align :");
+	Serial.println(Wav->BlockAlign);
+	Serial.print("Bits Per Sample :");
+	Serial.println(Wav->BitsPerSample);
+	Serial.print("Data Size :");
+	Serial.println(Wav->DataSize);
+}
+
+bool XT_Wav_Class::OpenWavFile()
+{
+	// Load wav file, if all goes ok returns true else false
+	// WavHeader_Struct WavHeader;
+
+	WavFile = SD.open(FileName); // Open the wav file
+	if (WavFile == false)
+	{
+		Serial.print("Could not open :");
+		Serial.println(FileName);
+		return false;
+	}
+	else
+	{
+		WavFile.read((byte *)&WavHeader, 44); // Read in the WAV header, which is first 44 bytes of the file.
+											  // We have to typecast to bytes for the "read" function
+		return true;
+	}
+}
+
+void XT_Wav_Class::LoadWavFile()
+{
+	if (OpenWavFile()) // Load file,
+	{
+		if (ValidWavData(&WavHeader))
+		{
+			DumpWAVHeader(&WavHeader); // Dump the header data to serial, optional!
+			Serial.println();
+			// DataSize = WavHeader.DataSize; // Copy the data size into our wav structure
+		}
+		else
+		{
+			Serial.print("Ivalid Wave file header! Filename: ");
+			Serial.println(FileName);
+		}
+
+		SampleRate = WavHeader.SampleRate;
+		BytesPerSample = (WavHeader.BitsPerSample / 8) * WavHeader.NumChannels;
+		DataSize = WavHeader.DataSize;
+		IncreaseBy = float(SampleRate) / SAMPLES_PER_SEC;
+		PlayingTime = (1000 * DataSize) / (uint32_t)(SampleRate);
+		WavFile.seek(44);	// Start of wav data
+		TotalBytesRead = 0; // Clear to no bytes read in so far
+
+		Speed = 1.0;
+		Volume = 100;
+	}
+}
+
+///**** End Latest additions **************************************
 
 
 void XT_Wav_Class::Init()

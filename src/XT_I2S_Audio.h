@@ -12,6 +12,7 @@
 #include "FreeRTOS.h"
 #include "driver/i2s.h"                 // Library of I2S routines, comes with ESP32 standard install
 #include "MusicDefinitions.h"
+#include "SD.h" // SD Card library, usually part of the standard install
 
 
 #define SAMPLES_PER_SEC 44100			// The rate at which samples are sent out. A single sample is fixed at 2 bytes stereo
@@ -357,6 +358,13 @@ class XT_Wav_Class : public XT_PlayListItem_Class
 	protected:
 
 	public:
+	File WavFile; // Object for accessing the opened wavfile
+	String FileName;
+	bool SamplesBufferIsEmpty;
+	uint32_t TotalBytesRead = 0; // Number of bytes read from file so far
+	int64_t DataBuffIdx = 0;	 // Index into the wavs sample data in buffer data loaded from file
+	
+
 	uint16_t SampleRate;
 	uint8_t BytesPerSample;						// i.e. 1,2 4 etc. if stereo and 2 bytes per sample this would be 4
 	uint32_t DataSize=0;                        // The last integer part of count
@@ -377,11 +385,18 @@ class XT_Wav_Class : public XT_PlayListItem_Class
 												// functions to access. default is 1, normal speed.
 
 	// constructors
-	XT_Wav_Class(const unsigned char *WavData);
+	//XT_Wav_Class(const unsigned char *WavData);
+	XT_Wav_Class(const String &FileName);
 
 	// functions
 	void NextSample(int16_t* Left,int16_t* Right);
 	void Init()override;						// initialize any default values
+
+	void LoadWavFile();
+	bool OpenWavFile();
+	bool ValidWavData(WavHeader_Struct *Wav);
+	void DumpWAVHeader(WavHeader_Struct *Wav);
+	void PrintData(const char *Data, uint8_t NumBytes);
 };
 
 class XT_I2S_Class
