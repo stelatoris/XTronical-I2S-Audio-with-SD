@@ -656,15 +656,10 @@ void XT_Wav_Class::NextSample(int16_t *Left, int16_t *Right)
 			SamplesDataIdx += 4; // 4, because 2 x 16bit samples
 			TimeElapsed = 1000 * SamplesDataIdx / BytesPerSample;
 			TimeLeft = PlayingTime - TimeElapsed;
-			if (SamplesDataIdx >= LastNumBytesRead)
+			if (SamplesDataIdx >= LastNumBytesRead) // end of data, flag end
 			{
-				ReadFile();
-			}
-
-			if (SamplesDataIdx >= DataSize) // end of data, flag end
-			{
+				ReadFile(); // read file to reset data back to beginning of WAV data
 				Count = 0;			 // reset frequency counter
-				SamplesDataIdx = DataStart; // reset data pointer back to beginning of WAV data
 				Playing = false;	 // mark as completed
 				TimeLeft = 0;
 			}
