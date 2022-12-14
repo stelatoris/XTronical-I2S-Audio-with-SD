@@ -23,6 +23,8 @@
 #define SINE_RESOLUTION	1024			// Used when outputing sine waves, higher the number the better the sound, although 1024 seems opitimal
 										// to my ear anyway. But this takes up memory as 2 bytes per entry
 #define BUFFER_SIZE 1024				// Size of buffers
+#define NUM_BYTES_TO_READ_FROM_FILE 1024 // How many bytes to read from wav file at a time
+
 
 #define MAX_WAVE_HEIGHT 32767			// Max height wave can be 
 #define MIN_WAVE_HEIGHT -32768			// Min height wave can be 
@@ -360,16 +362,21 @@ class XT_Wav_Class : public XT_PlayListItem_Class
 	public:
 	File WavFile; // Object for accessing the opened wavfile
 	String FileName;
+	uint8_t Samples[NUM_BYTES_TO_READ_FROM_FILE];
 	bool SamplesBufferIsEmpty;
 	uint32_t TotalBytesRead = 0; // Number of bytes read from file so far
 	int64_t DataBuffIdx = 0;	 // Index into the wavs sample data in buffer data loaded from file
+	uint16_t LastNumBytesRead;	 // Num bytes actually read from the wav file which will either be
+								 // NUM_BYTES_TO_READ_FROM_FILE or less than this if we are very
+								 // near the end of the file. i.e. we can't read beyond the file.
 	
+	//bool RepeatForever;						// if true repeats forever, if true value for repeat below ignored
 
 	uint16_t SampleRate;
 	uint8_t BytesPerSample;						// i.e. 1,2 4 etc. if stereo and 2 bytes per sample this would be 4
 	uint32_t DataSize=0;                        // The last integer part of count
 	uint32_t DataStart;							// offset of the actual data.
-	int64_t DataIdx;
+	int64_t SamplesDataIdx;
 	const unsigned char *Data;
 	float IncreaseBy=0;                         // The amount to increase the counter by per call to "onTimer"
 	float Count=0;                              // The counter counting up, we check this to see if we need to send
@@ -392,6 +399,7 @@ class XT_Wav_Class : public XT_PlayListItem_Class
 	void NextSample(int16_t* Left,int16_t* Right);
 	void Init()override;						// initialize any default values
 
+	void ReadFile();
 	void LoadWavFile();
 	bool OpenWavFile();
 	bool ValidWavData(WavHeader_Struct *Wav);
