@@ -566,10 +566,10 @@ void XT_Wav_Class::LoadWavFile()
 
 void XT_Wav_Class::ReadFile()
 {
+	//Serial.println("ReadFile()");
 	uint16_t i;			  // loop counter
 	int16_t SignedSample; // Single Signed Sample
 	float Volume;
-	SamplesDataIdx=0;
 
 	if (TotalBytesRead + NUM_BYTES_TO_READ_FROM_FILE > DataSize) // If next read will go past the end then adjust the
 		LastNumBytesRead = DataSize - TotalBytesRead;			 // amount to read to whatever is remaining to read
@@ -577,28 +577,36 @@ void XT_Wav_Class::ReadFile()
 		LastNumBytesRead = NUM_BYTES_TO_READ_FROM_FILE; // Default to max to read
 
 	WavFile.read(Samples, LastNumBytesRead); // Read in the bytes from the file
-	TotalBytesRead += LastNumBytesRead;		 // Update the total bytes red in so far
+	SamplesDataIdx = 0;
+	TotalBytesRead += LastNumBytesRead; // Update the total bytes red in so far
 
-	if (TotalBytesRead >= DataSize) // Have we read in all the data?
-	{
-		if (RepeatForever)
-		{
-			WavFile.seek(44);	// Reset to start of wav data
-			TotalBytesRead = 0; // Clear to no bytes read in so far
-		}
-		else
-			Playing = false; // Flag that wav has completed
-	}
+	// if (TotalBytesRead >= DataSize) // Have we read in all the data?
+	// {
+	// 	if (RepeatForever)
+	// 	{
+	// 		WavFile.seek(44);	// Reset to start of wav data
+	// 		TotalBytesRead = 0; // Clear to no bytes read in so far
+	// 	}
+	// 	else
+	// 		Playing = false; // Flag that wav has completed
+	// }
 }
 
 void XT_Wav_Class::Init()
 {
+	//Serial.println("------Init()");
 	LastIntCount = 0;
 	if (Speed >= 0)
-	ReadFile();
-		//DataIdx = DataStart; // reset data pointer back to start of WAV data
-	else
-		//DataIdx = DataStart + DataSize; // reset data pointer back to end of WAV data
+	{
+		TotalBytesRead = 0;
+		LastNumBytesRead = 0;
+		WavFile.seek(44); // Reset to start of wav data
+		ReadFile();
+	}
+
+	// DataIdx = DataStart; // reset data pointer back to start of WAV data
+	// else
+	// DataIdx = DataStart + DataSize; // reset data pointer back to end of WAV data
 	Count = 0;
 	SpeedUpCount = 0;
 	TimeElapsed = 0;
@@ -622,7 +630,7 @@ void XT_Wav_Class::NextSample(int16_t *Left, int16_t *Right)
 	Count += ActualIncreaseBy;
 	IntPartOfCount = floor(Count);
 	// return previous value by default
-	*Left = (Samples[SamplesDataIdx + 1] << 8) + Samples[SamplesDataIdx];		 // Get last left channel Data
+	*Left = (Samples[SamplesDataIdx + 1] << 8) + Samples[SamplesDataIdx];	   // Get last left channel Data
 	*Right = (Samples[SamplesDataIdx + 3] << 8) + Samples[SamplesDataIdx + 2]; // Get last right channel Data
 	SetVolume(Left, Right, Volume);
 	if (IntPartOfCount > LastIntCount)
@@ -640,13 +648,13 @@ void XT_Wav_Class::NextSample(int16_t *Left, int16_t *Right)
 				TempSpeed = CopyOfSpeed - 1.0;
 				DecimalPart = modf(TempSpeed, &IntPartAsFloat);
 				SamplesDataIdx += BytesPerSample * int(IntPartAsFloat); // always increase by the integer part
-				SpeedUpCount += DecimalPart;					 // This keeps track of the decimal part
+				SpeedUpCount += DecimalPart;							// This keeps track of the decimal part
 				// If SpeedUpCount >1 then add this extra sample to the DataIdx too and subtract 1 from SpeedUpCount
 				// This allows us "apparently" increment the DataIdx by a decimal amount
 				if (SpeedUpCount >= 1)
 				{
 					SamplesDataIdx += BytesPerSample; // move another pos into data
-					SpeedUpCount--;			   // Take it off SpeedUpCount
+					SpeedUpCount--;					  // Take it off SpeedUpCount
 				}
 			}
 			// gone to a new integer of count, we need to send a new value to the I2S DAC next time
@@ -656,12 +664,20 @@ void XT_Wav_Class::NextSample(int16_t *Left, int16_t *Right)
 			SamplesDataIdx += 4; // 4, because 2 x 16bit samples
 			TimeElapsed = 1000 * SamplesDataIdx / BytesPerSample;
 			TimeLeft = PlayingTime - TimeElapsed;
-			if (SamplesDataIdx >= LastNumBytesRead) // end of data, flag end
+			//Serial.println(SamplesDataIdx);
+			//Serial.println("IN");
+			if (TotalBytesRead >= DataSize) // end of data, flag end
+			{
+				Count = 0; // reset frequency counter
+				// SamplesDataIdx = 0;
+				Playing = false; // mark as completed
+				TimeLeft = 0;
+			}
+
+			else if (SamplesDataIdx >= LastNumBytesRead) // end of data, flag end
 			{
 				ReadFile(); // read file to reset data back to beginning of WAV data
-				Count = 0;			 // reset frequency counter
-				Playing = false;	 // mark as completed
-				TimeLeft = 0;
+				//Count = 0;	// reset frequency counter
 			}
 		}
 		// else
@@ -704,6 +720,7 @@ void XT_Wav_Class::NextSample(int16_t *Left, int16_t *Right)
 		// 	}
 		// }
 	}
+	//Serial.println("OUT"); // debugging
 }
 
 /************************************************************************************************************************/

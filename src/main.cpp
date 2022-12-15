@@ -62,7 +62,8 @@ void setup()
 void loop()
 {
   I2SAudio.FillBuffer();
-  MySound.Speed = floatMap(analogRead(POT_SPEED_WAV1_ANALOG_IN), 0, 4095, 0.0, 4.0);
+  //MySound.Speed = floatMap(analogRead(POT_SPEED_WAV1_ANALOG_IN), 0, 4095, 0.0, 4.0);
+  //Serial.println(".");
 
   MySound.Volume = floatMap(analogRead(POT_VOL_WAV1_ANALOG_IN), 0, 4095, 0, 150);
 }
