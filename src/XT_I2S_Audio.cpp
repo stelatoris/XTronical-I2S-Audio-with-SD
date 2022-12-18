@@ -669,10 +669,12 @@ void XT_Wav_Class::NextSample(int16_t *Left, int16_t *Right)
 			// update the DataIDx counter
 
 			LastIntCount = IntPartOfCount;
-			if (NumChannels == 2)
-				SamplesDataIdx += 4; // 4, because 2 x 16bit samples
-			else
-				SamplesDataIdx += 2; // Mono Channel
+			SamplesDataIdx += BytesPerSample; // 4, because 2 x 16bit samples
+			// if (NumChannels == 2)
+			// 	SamplesDataIdx += 4; // 4, because 2 x 16bit samples
+			// else
+			// 	SamplesDataIdx += 2; // Mono Channel
+
 			TimeElapsed = 1000 * SamplesDataIdx / BytesPerSample;
 			TimeLeft = PlayingTime - TimeElapsed;
 

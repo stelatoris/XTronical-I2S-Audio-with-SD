@@ -17,7 +17,7 @@
 
 XT_I2S_Class I2SAudio(I2S_LRC, I2S_BCLK, I2S_DOUT, I2S_NUM_0);
 
-XT_Wav_Class MySound("/alert1.wav");
+XT_Wav_Class MySound("/sample.wav");
 
 //------------------------------------------------------------------------------------------------------------------------
 
@@ -54,7 +54,7 @@ void setup()
   LoadFiles();  // Load all wave files
 
   MySound.RepeatForever = true;
-  MySound.Volume = 100;
+  MySound.Volume = 80;
 
   I2SAudio.Play(&MySound);
 }
@@ -62,8 +62,8 @@ void setup()
 void loop()
 {
   I2SAudio.FillBuffer();
-  //MySound.Speed = floatMap(analogRead(POT_SPEED_WAV1_ANALOG_IN), 0, 4095, 0.0, 4.0);
+  MySound.Speed = floatMap(analogRead(POT_SPEED_WAV1_ANALOG_IN), 0, 4095, 0.0, 4.0);
   Serial.println("-------------------------------------");
 
-  //MySound.Volume = floatMap(analogRead(POT_VOL_WAV1_ANALOG_IN), 0, 4095, 0, 150);
+  MySound.Volume = floatMap(analogRead(POT_VOL_WAV1_ANALOG_IN), 0, 4095, 0, 150);
 }
