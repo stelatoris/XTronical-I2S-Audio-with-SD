@@ -551,6 +551,7 @@ void XT_Wav_Class::LoadWavFile()
 
 		SampleRate = WavHeader.SampleRate;
 		BytesPerSample = (WavHeader.BitsPerSample / 8) * WavHeader.NumChannels;
+		NumChannels = WavHeader.NumChannels;
 		DataSize = WavHeader.DataSize;
 		IncreaseBy = float(SampleRate) / SAMPLES_PER_SEC;
 		PlayingTime = (1000 * DataSize) / (uint32_t)(SampleRate);
@@ -566,7 +567,7 @@ void XT_Wav_Class::LoadWavFile()
 
 void XT_Wav_Class::ReadFile()
 {
-	//Serial.println("Read");
+	Serial.println("Read");
 	if (TotalBytesRead + NUM_BYTES_TO_READ_FROM_FILE > DataSize) // If next read will go past the end then adjust the
 		LastNumBytesRead = DataSize - TotalBytesRead;			 // amount to read to whatever is remaining to read
 	else
@@ -595,7 +596,6 @@ void XT_Wav_Class::Init()
 	if (Speed >= 0)
 	{
 		TotalBytesRead = 0;
-		LastNumBytesRead = 0;
 		WavFile.seek(44); // Reset to start of wav data
 		ReadFile();
 	}
@@ -614,6 +614,7 @@ void XT_Wav_Class::NextSample(int16_t *Left, int16_t *Right)
 	// Returns the next samples to be played, note that this routine will return values suitable to
 	// be played back at SAMPLES_PER_SEC.
 	// If mono then will return same data on left and right channels
+	// Serial.println(Count);
 
 	uint32_t IntPartOfCount;
 	float ActualIncreaseBy;
@@ -626,8 +627,19 @@ void XT_Wav_Class::NextSample(int16_t *Left, int16_t *Right)
 	Count += ActualIncreaseBy;
 	IntPartOfCount = floor(Count);
 	// return previous value by default
-	*Left = (Samples[SamplesDataIdx + 1] << 8) + Samples[SamplesDataIdx];	   // Get last left channel Data
-	*Right = (Samples[SamplesDataIdx + 3] << 8) + Samples[SamplesDataIdx + 2]; // Get last right channel Data
+
+	if (NumChannels == 2)
+	{
+		*Left = (Samples[SamplesDataIdx + 1] << 8) + Samples[SamplesDataIdx];	   // Get last left channel Data
+		*Right = (Samples[SamplesDataIdx + 3] << 8) + Samples[SamplesDataIdx + 2]; // Get last right channel Data
+	}
+	else if (NumChannels == 1)
+	{																		   // if Mono Channel
+		*Left = (Samples[SamplesDataIdx + 1] << 8) + Samples[SamplesDataIdx];  // Get last left channel Data
+		*Right = (Samples[SamplesDataIdx + 1] << 8) + Samples[SamplesDataIdx]; // Right is same as left channel
+	}
+	// Serial.println(BytesPerSample);
+
 	SetVolume(Left, Right, Volume);
 	if (IntPartOfCount > LastIntCount)
 	{
@@ -657,14 +669,17 @@ void XT_Wav_Class::NextSample(int16_t *Left, int16_t *Right)
 			// update the DataIDx counter
 
 			LastIntCount = IntPartOfCount;
-			SamplesDataIdx += 4; // 4, because 2 x 16bit samples
+			if (NumChannels == 2)
+				SamplesDataIdx += 4; // 4, because 2 x 16bit samples
+			else
+				SamplesDataIdx += 2; // Mono Channel
 			TimeElapsed = 1000 * SamplesDataIdx / BytesPerSample;
 			TimeLeft = PlayingTime - TimeElapsed;
 
 			if (TotalBytesRead >= DataSize) // end of data, flag end
 			{
 				Count = 0; // reset frequency counter
-				// SamplesDataIdx = 0;
+				SamplesDataIdx = 0;
 				Playing = false; // mark as completed
 				TimeLeft = 0;
 			}
@@ -714,8 +729,7 @@ void XT_Wav_Class::NextSample(int16_t *Left, int16_t *Right)
 		// 	}
 		// }
 	}
-	if(Count>39420)
-	Serial.println(Count);
+
 	// Serial.println("OUT"); // debugging
 }
 
@@ -1181,7 +1195,7 @@ int16_t CheckTopBottomedOut(int32_t Sample)
 
 uint32_t XT_I2S_Class::MixSamples()
 {
-	
+
 	// Goes through all sounds and mixes the next sample together, returns the mixed stereo 16 bit sample (so 4 bytes)
 	XT_PlayListItem_Class *PlayItem, *NextPlayItem;
 	uint32_t MixedSample;
@@ -1254,17 +1268,17 @@ void XT_I2S_Class::FillBuffer()
 
 	uint32_t MixedSample;
 	size_t NumBytesWritten = 4; // Set to 4 so loop enters below
-	
+
 	while (NumBytesWritten > 0) // keep filling until full, note of we run out of samples then MixSamples will return 0 (silence)
 	{							// i2s_write (below) should fill in 4 byte chunks, so will return 0 when full
-		
 		MixedSample = MixSamples();
 		// Store sample in buffer, increment buffer pointer, check for end of buffer or for end of sample data
 		// The 4 is number of bytes to write, it's 4 as 2 bytes per sample and stereo (2 samples)
 		// 1 is max number of rtos ticks to wait
 		i2s_write(I2S_NUM_0, &MixedSample, 4, &NumBytesWritten, 1);
+		
 	}
-	Serial.println("0ut");
+	Serial.println(NumBytesWritten);
 }
 
 void XT_I2S_Class::Beep()

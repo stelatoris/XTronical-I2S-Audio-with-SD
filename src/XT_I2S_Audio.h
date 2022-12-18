@@ -336,6 +336,7 @@ public:
 
 	uint16_t SampleRate;
 	uint8_t BytesPerSample; // i.e. 1,2 4 etc. if stereo and 2 bytes per sample this would be 4
+	uint16_t NumChannels;	 // 1=mono,2=stereo
 	uint32_t DataSize = 0;	// The last integer part of count
 	uint32_t DataStart;		// offset of the actual data.
 	int64_t SamplesDataIdx; // Index into the wavs sample data in buffer data loaded from file
