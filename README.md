@@ -22,7 +22,7 @@ My 1st goal, is to add the SD Card option to this library so that I can play lar
   Now it is able to construct an XT_Wav_Class object using the filename as argument. e.g: XT_Wav_Class MySound("/sample.wav");
   To add more WAV files to be played, simple create more XT_Wav_Class objects.
 
-- Can Play one WAV file, either Stereo or Mono Channels. 18-12-2022
+- Can Play one WAV file from SD card, either Stereo or Mono Channels. 18-12-2022
 
 
 
