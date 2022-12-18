@@ -101,7 +101,7 @@ public:
 
 	char Name[32];		 // Name of this sound - optional, used mostly in debugging
 	uint8_t LastValue;	 // Last value returned from NextByte function below
-	int16_t Volume = 50; // VOl as %, 0=silence, 50 half, 100 full, 200 twice as loud as original
+	int16_t Volume = 25; // VOl as %, 0=silence, 50 half, 100 full, 200 twice as loud as original
 
 	bool RepeatForever; // if true repeats forever, if true value for repeat below ignored
 	uint16_t Repeat;	// Number of times to repeat, 1 to 65535

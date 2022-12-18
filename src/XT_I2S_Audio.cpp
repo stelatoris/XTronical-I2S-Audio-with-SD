@@ -566,11 +566,7 @@ void XT_Wav_Class::LoadWavFile()
 
 void XT_Wav_Class::ReadFile()
 {
-	//Serial.println("ReadFile()");
-	uint16_t i;			  // loop counter
-	int16_t SignedSample; // Single Signed Sample
-	float Volume;
-
+	//Serial.println("Read");
 	if (TotalBytesRead + NUM_BYTES_TO_READ_FROM_FILE > DataSize) // If next read will go past the end then adjust the
 		LastNumBytesRead = DataSize - TotalBytesRead;			 // amount to read to whatever is remaining to read
 	else
@@ -594,7 +590,7 @@ void XT_Wav_Class::ReadFile()
 
 void XT_Wav_Class::Init()
 {
-	//Serial.println("------Init()");
+	Serial.println("Init-------");
 	LastIntCount = 0;
 	if (Speed >= 0)
 	{
@@ -664,8 +660,7 @@ void XT_Wav_Class::NextSample(int16_t *Left, int16_t *Right)
 			SamplesDataIdx += 4; // 4, because 2 x 16bit samples
 			TimeElapsed = 1000 * SamplesDataIdx / BytesPerSample;
 			TimeLeft = PlayingTime - TimeElapsed;
-			//Serial.println(SamplesDataIdx);
-			//Serial.println("IN");
+
 			if (TotalBytesRead >= DataSize) // end of data, flag end
 			{
 				Count = 0; // reset frequency counter
@@ -677,7 +672,6 @@ void XT_Wav_Class::NextSample(int16_t *Left, int16_t *Right)
 			else if (SamplesDataIdx >= LastNumBytesRead) // end of data, flag end
 			{
 				ReadFile(); // read file to reset data back to beginning of WAV data
-				//Count = 0;	// reset frequency counter
 			}
 		}
 		// else
@@ -720,7 +714,9 @@ void XT_Wav_Class::NextSample(int16_t *Left, int16_t *Right)
 		// 	}
 		// }
 	}
-	//Serial.println("OUT"); // debugging
+	if(Count>39420)
+	Serial.println(Count);
+	// Serial.println("OUT"); // debugging
 }
 
 /************************************************************************************************************************/
@@ -1185,6 +1181,7 @@ int16_t CheckTopBottomedOut(int32_t Sample)
 
 uint32_t XT_I2S_Class::MixSamples()
 {
+	
 	// Goes through all sounds and mixes the next sample together, returns the mixed stereo 16 bit sample (so 4 bytes)
 	XT_PlayListItem_Class *PlayItem, *NextPlayItem;
 	uint32_t MixedSample;
@@ -1257,15 +1254,17 @@ void XT_I2S_Class::FillBuffer()
 
 	uint32_t MixedSample;
 	size_t NumBytesWritten = 4; // Set to 4 so loop enters below
-
+	
 	while (NumBytesWritten > 0) // keep filling until full, note of we run out of samples then MixSamples will return 0 (silence)
 	{							// i2s_write (below) should fill in 4 byte chunks, so will return 0 when full
+		
 		MixedSample = MixSamples();
 		// Store sample in buffer, increment buffer pointer, check for end of buffer or for end of sample data
 		// The 4 is number of bytes to write, it's 4 as 2 bytes per sample and stereo (2 samples)
 		// 1 is max number of rtos ticks to wait
 		i2s_write(I2S_NUM_0, &MixedSample, 4, &NumBytesWritten, 1);
 	}
+	Serial.println("0ut");
 }
 
 void XT_I2S_Class::Beep()
