@@ -13,13 +13,14 @@
 
 #define POT_SPEED_WAV1_ANALOG_IN 32 // Pin that will connect to the middle pin of the potentiometer.
 #define POT_VOL_WAV1_ANALOG_IN 34   // Pin that will connect to the middle pin of the potentiometer.
+#define POT_VOL_WAV2_ANALOG_IN 35   // Pin that will connect to the middle pin of the potentiometer.
 
-char fname[] = {"/engine1.wav"};
 int engine_swtch = 4;
+int alert_swtch = 16;
 XT_I2S_Class I2SAudio(I2S_LRC, I2S_BCLK, I2S_DOUT, I2S_NUM_0);
 
 XT_Wav_Class MySound("/engine1.wav");
-// XT_Wav_Class MySound2("/sample2.wav");
+XT_Wav_Class MySound2("/alert1.wav");
 
 //------------------------------------------------------------------------------------------------------------------------
 
@@ -46,7 +47,7 @@ void SDCardInit()
 void LoadFiles()
 {
   MySound.LoadWavFile();
-  // MySound2.LoadWavFile();
+  MySound2.LoadWavFile();
 }
 
 void setup()
@@ -57,34 +58,75 @@ void setup()
   LoadFiles(); // Load all wave files
 
   pinMode(engine_swtch, INPUT);
+  pinMode(alert_swtch, INPUT);
 
   MySound.RepeatForever = true;
   MySound.fname = "engine1.wav";
 
-  // MySound2.RepeatForever = true;
-  // MySound2.Volume = 80;
+  MySound2.RepeatForever = true;
+  MySound2.fname = "alert1.wav";
 
-   I2SAudio.Play(&MySound);
+  // I2SAudio.Play(&MySound);
   // I2SAudio.Play(&MySound2);
 }
 
 void loop()
 {
   I2SAudio.FillBuffer();
-  MySound.Speed = floatMap(analogRead(POT_SPEED_WAV1_ANALOG_IN), 0, 4095, 0.0, 3.0);
+
+  MySound.Speed = floatMap(analogRead(POT_SPEED_WAV1_ANALOG_IN), 0, 4095, 0.5, 3.2);
   // Serial.println("-------------------------------------");
 
   MySound.Volume = floatMap(analogRead(POT_VOL_WAV1_ANALOG_IN), 0, 4095, 0, 100);
+  MySound2.Volume = floatMap(analogRead(POT_VOL_WAV2_ANALOG_IN), 0, 4095, 0, 100);
 
+  // engine sound
   if (digitalRead(engine_swtch) == HIGH)
   {
+    // Serial.println("Eng ON");
     if (I2SAudio.AlreadyPlaying(&MySound))
     {
+      //Serial.println("Eng PLAYING");
     } // do nothing
 
     else
+    {
+      Serial.println("Eng ON");
       I2SAudio.Play(&MySound);
+    }
   }
   else
-    I2SAudio.RemoveFromPlayList(&MySound);
+  {
+    if (I2SAudio.AlreadyPlaying(&MySound))
+    { 
+      I2SAudio.RemoveFromPlayList(&MySound);
+      Serial.println("Eng Removed");
+    }
+    else {} // do nothing
+  }
+
+  // // alert sound -------------------------------------------
+  if (digitalRead(alert_swtch) == HIGH)
+  {
+    // Serial.println("Alert ON");
+    if (I2SAudio.AlreadyPlaying(&MySound2))
+    {
+      //Serial.println("Alert PLAYING");
+    } // do nothing
+
+    else
+    {
+      Serial.println("Alert ON");
+      I2SAudio.Play(&MySound2);
+    }
+  }
+  else
+  {
+    if (I2SAudio.AlreadyPlaying(&MySound2))
+    { 
+      I2SAudio.RemoveFromPlayList(&MySound2);
+      Serial.println("Alert Removed");
+    }
+    else {} // do nothing
+  }
 }
