@@ -14,10 +14,12 @@
 #define POT_SPEED_WAV1_ANALOG_IN 32 // Pin that will connect to the middle pin of the potentiometer.
 #define POT_VOL_WAV1_ANALOG_IN 34   // Pin that will connect to the middle pin of the potentiometer.
 
-
+char fname[] = {"/engine1.wav"};
+int engine_swtch = 4;
 XT_I2S_Class I2SAudio(I2S_LRC, I2S_BCLK, I2S_DOUT, I2S_NUM_0);
 
-XT_Wav_Class MySound("/sample.wav");
+XT_Wav_Class MySound("/engine1.wav");
+// XT_Wav_Class MySound2("/sample2.wav");
 
 //------------------------------------------------------------------------------------------------------------------------
 
@@ -44,26 +46,45 @@ void SDCardInit()
 void LoadFiles()
 {
   MySound.LoadWavFile();
+  // MySound2.LoadWavFile();
 }
 
 void setup()
 {
   Serial.begin(9600); // Used for info/debug
-  
+
   SDCardInit();
-  LoadFiles();  // Load all wave files
+  LoadFiles(); // Load all wave files
+
+  pinMode(engine_swtch, INPUT);
 
   MySound.RepeatForever = true;
-  MySound.Volume = 80;
+  MySound.fname = "engine1.wav";
 
-  I2SAudio.Play(&MySound);
+  // MySound2.RepeatForever = true;
+  // MySound2.Volume = 80;
+
+   I2SAudio.Play(&MySound);
+  // I2SAudio.Play(&MySound2);
 }
 
 void loop()
 {
   I2SAudio.FillBuffer();
-  MySound.Speed = floatMap(analogRead(POT_SPEED_WAV1_ANALOG_IN), 0, 4095, 0.0, 4.0);
-  Serial.println("-------------------------------------");
+  MySound.Speed = floatMap(analogRead(POT_SPEED_WAV1_ANALOG_IN), 0, 4095, 0.0, 3.0);
+  // Serial.println("-------------------------------------");
 
-  MySound.Volume = floatMap(analogRead(POT_VOL_WAV1_ANALOG_IN), 0, 4095, 0, 150);
+  MySound.Volume = floatMap(analogRead(POT_VOL_WAV1_ANALOG_IN), 0, 4095, 0, 100);
+
+  if (digitalRead(engine_swtch) == HIGH)
+  {
+    if (I2SAudio.AlreadyPlaying(&MySound))
+    {
+    } // do nothing
+
+    else
+      I2SAudio.Play(&MySound);
+  }
+  else
+    I2SAudio.RemoveFromPlayList(&MySound);
 }

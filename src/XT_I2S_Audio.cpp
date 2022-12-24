@@ -567,7 +567,7 @@ void XT_Wav_Class::LoadWavFile()
 
 void XT_Wav_Class::ReadFile()
 {
-	Serial.println("Read");
+	//Serial.println("Read");
 	if (TotalBytesRead + NUM_BYTES_TO_READ_FROM_FILE > DataSize) // If next read will go past the end then adjust the
 		LastNumBytesRead = DataSize - TotalBytesRead;			 // amount to read to whatever is remaining to read
 	else
@@ -591,7 +591,7 @@ void XT_Wav_Class::ReadFile()
 
 void XT_Wav_Class::Init()
 {
-	Serial.println("Init-------");
+	//Serial.println("Init-------");
 	LastIntCount = 0;
 	if (Speed >= 0)
 	{
@@ -1280,7 +1280,6 @@ void XT_I2S_Class::FillBuffer()
 		i2s_write(I2S_NUM_0, &MixedSample, 4, &NumBytesWritten, 1);
 		
 	}
-	Serial.println(NumBytesWritten);
 }
 
 void XT_I2S_Class::Beep()
