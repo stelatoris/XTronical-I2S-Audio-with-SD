@@ -12,6 +12,8 @@
 #include <hardwareSerial.h>
 
 #define M_PI 3.14159265358979323846
+#define LED_READ_PIN 15 // for debugging
+#define LED_DONE_PIN 14 // for debugging
 
 WavHeader_Struct WavHeader;				// Used as a place to store the header data from the wav data
 XT_Instrument_Class DEFAULT_INSTRUMENT; // Used if calling routine does not state an instrument for a note.
@@ -567,7 +569,8 @@ void XT_Wav_Class::LoadWavFile()
 
 void XT_Wav_Class::ReadFile()
 {
-	//Serial.println("Read");
+	digitalWrite(LED_READ_PIN, HIGH);
+	// Serial.println("Read");
 	if (TotalBytesRead + NUM_BYTES_TO_READ_FROM_FILE > DataSize) // If next read will go past the end then adjust the
 		LastNumBytesRead = DataSize - TotalBytesRead;			 // amount to read to whatever is remaining to read
 	else
@@ -587,11 +590,13 @@ void XT_Wav_Class::ReadFile()
 	// 	else
 	// 		Playing = false; // Flag that wav has completed
 	// }
+	digitalWrite(LED_READ_PIN, LOW);
 }
 
 void XT_Wav_Class::Init()
 {
-	//Serial.println("Init-------");
+	digitalWrite(LED_DONE_PIN, HIGH); // for debugging
+		
 	LastIntCount = 0;
 	if (Speed >= 0)
 	{
@@ -607,6 +612,7 @@ void XT_Wav_Class::Init()
 	SpeedUpCount = 0;
 	TimeElapsed = 0;
 	TimeLeft = PlayingTime;
+	digitalWrite(LED_DONE_PIN, LOW); // for debugging
 }
 
 void XT_Wav_Class::NextSample(int16_t *Left, int16_t *Right)
@@ -680,6 +686,7 @@ void XT_Wav_Class::NextSample(int16_t *Left, int16_t *Right)
 
 			if (TotalBytesRead >= DataSize) // end of data, flag end
 			{
+
 				Count = 0; // reset frequency counter
 				SamplesDataIdx = 0;
 				Playing = false; // mark as completed
@@ -1256,6 +1263,7 @@ uint32_t XT_I2S_Class::MixSamples()
 	RightMix = uint16_t(CheckTopBottomedOut(RightMix));
 	// move the 2 16bit samples into one 32bit variable
 	MixedSample = (LeftMix << 16) | (RightMix);
+
 	return MixedSample;
 }
 
@@ -1267,12 +1275,13 @@ void XT_I2S_Class::FillBuffer()
 	// have control over that we can use to mix in sounds as required. It's one of these buffers that we will be sending to
 	// the I2S system, we will fill the I2S with one buffer as we mix sounds together into the other and then swap
 	// periodically.
-
+	
 	uint32_t MixedSample;
 	size_t NumBytesWritten = 4; // Set to 4 so loop enters below
 
 	while (NumBytesWritten > 0) // keep filling until full, note of we run out of samples then MixSamples will return 0 (silence)
 	{							// i2s_write (below) should fill in 4 byte chunks, so will return 0 when full
+
 		MixedSample = MixSamples();
 		// Store sample in buffer, increment buffer pointer, check for end of buffer or for end of sample data
 		// The 4 is number of bytes to write, it's 4 as 2 bytes per sample and stereo (2 samples)

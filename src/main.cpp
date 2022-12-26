@@ -15,12 +15,17 @@
 #define POT_VOL_WAV1_ANALOG_IN 34   // Pin that will connect to the middle pin of the potentiometer.
 #define POT_VOL_WAV2_ANALOG_IN 35   // Pin that will connect to the middle pin of the potentiometer.
 
+#define LED_READ_PIN 15 // for debugging
+#define LED_DONE_PIN 14  // for debugging
+
 int engine_swtch = 4;
 int alert_swtch = 16;
 XT_I2S_Class I2SAudio(I2S_LRC, I2S_BCLK, I2S_DOUT, I2S_NUM_0);
 
 XT_Wav_Class MySound("/engine1.wav");
 XT_Wav_Class MySound2("/alert1.wav");
+
+String fname{"hello"};
 
 //------------------------------------------------------------------------------------------------------------------------
 
@@ -59,11 +64,13 @@ void setup()
 
   pinMode(engine_swtch, INPUT);
   pinMode(alert_swtch, INPUT);
+  pinMode(LED_READ_PIN, OUTPUT);
+  pinMode(LED_DONE_PIN, OUTPUT);
 
-  MySound.RepeatForever = true;
+  MySound.RepeatForever = false;
   MySound.fname = "engine1.wav";
 
-  MySound2.RepeatForever = true;
+  MySound2.RepeatForever = false;
   MySound2.fname = "alert1.wav";
 
   // I2SAudio.Play(&MySound);
