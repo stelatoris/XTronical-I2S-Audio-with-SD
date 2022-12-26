@@ -24,6 +24,13 @@ My 1st goal, is to add the SD Card option to this library so that I can play lar
 
 - Can Play one WAV file from SD card, either Stereo or Mono Channels. 18-12-2022
 
+<b>Small success!</b>
+26-12-2022
+- It can now Play two WAV files from SD card with no latency issues when using WAV files that have a sample rate of 16,000 Hz.
+I tied two files with 44,100 Hz and have experienced latency issues.
+The latency issue is expressed by the program not able to exit the `while (NumBytesWritten > 0)` loop in the void XT_I2S_Class::FillBuffer(). It appears that the 
+i2s_write(I2S_NUM_0, &MixedSample, 4, &NumBytesWritten, 1); function keeps returning `NumBytesWritten` greater than 0. At this point, it never exits to the main prog loop().
+
 
 
 
