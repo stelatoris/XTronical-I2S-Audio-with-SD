@@ -12,8 +12,13 @@
 #include <hardwareSerial.h>
 
 #define M_PI 3.14159265358979323846
-#define LED_READ_PIN 15 // for debugging
-#define LED_DONE_PIN 14 // for debugging
+
+//************************* FOR DEBUGGING - CAN REMOVE *******************************
+// If you would like to use LEDs, you need to set their pins to OUTPUT in setup()
+// If you would like to remove them, delete their call in lines 577, 598 and 603, 620
+#define LED_READ_PIN 15 // for debugging Blink when File is read fromm SD card
+#define LED_DONE_PIN 14 // for debugging Blink when Audio sample is completed
+//************************************************************************************
 
 WavHeader_Struct WavHeader;				// Used as a place to store the header data from the wav data
 XT_Instrument_Class DEFAULT_INSTRUMENT; // Used if calling routine does not state an instrument for a note.
@@ -569,7 +574,7 @@ void XT_Wav_Class::LoadWavFile()
 
 void XT_Wav_Class::ReadFile()
 {
-	digitalWrite(LED_READ_PIN, HIGH);
+	digitalWrite(LED_READ_PIN, HIGH);	// for debugging. See note on top
 	// Serial.println("Read");
 	if (TotalBytesRead + NUM_BYTES_TO_READ_FROM_FILE > DataSize) // If next read will go past the end then adjust the
 		LastNumBytesRead = DataSize - TotalBytesRead;			 // amount to read to whatever is remaining to read
@@ -590,12 +595,12 @@ void XT_Wav_Class::ReadFile()
 	// 	else
 	// 		Playing = false; // Flag that wav has completed
 	// }
-	digitalWrite(LED_READ_PIN, LOW);
+	digitalWrite(LED_READ_PIN, LOW);	// for debugging. See note on top
 }
 
 void XT_Wav_Class::Init()
 {
-	digitalWrite(LED_DONE_PIN, HIGH); // for debugging
+	digitalWrite(LED_DONE_PIN, HIGH); // for debugging. See note on top
 		
 	LastIntCount = 0;
 	if (Speed >= 0)
@@ -612,7 +617,7 @@ void XT_Wav_Class::Init()
 	SpeedUpCount = 0;
 	TimeElapsed = 0;
 	TimeLeft = PlayingTime;
-	digitalWrite(LED_DONE_PIN, LOW); // for debugging
+	digitalWrite(LED_DONE_PIN, LOW); // for debugging. See note on top
 }
 
 void XT_Wav_Class::NextSample(int16_t *Left, int16_t *Right)
